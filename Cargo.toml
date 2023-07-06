@@ -1,0 +1,14 @@
+[package]
+name = "corrector_of_llvm_xray_stack_flame"
+version = "0.0.1"
+description = "Corrects the buggy output of `llvm-xray stack --stack-format=flame`."
+authors = ["Derick Eddington"]
+license = "Unlicense"
+repository = "https://github.com/DerickEddington/corrector_of_llvm_xray_stack_flame"
+edition = "2021"
+categories = ["visualization", "development-tools::profiling", "command-line-utilities"]
+keywords = ["flamegraph", "xray", "tracing", "profiling"]
+
+[[bin]]
+name = "corrector-of-llvm-xray-stack-flame"
+path = "src/main.rs"
