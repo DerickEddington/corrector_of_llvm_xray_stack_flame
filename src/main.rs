@@ -145,15 +145,11 @@ mod node {
 
     impl Node {
         /// The purpose of the entire program.
-        pub fn correct_for_child(&self, child: &Self) -> Result<(), &'static str> {
+        pub fn correct_for_child(&self, child: &Self) {
             if let Some(attr) = self.attribute.get() {
                 let child_attr = child.attribute.get().expect("accounted for");
-                self.attribute.set(Some(
-                    attr.checked_sub(child_attr)
-                        .ok_or("parent's attribute is less than child's")?,
-                ));
+                self.attribute.set(Some(attr.saturating_sub(child_attr)));
             }
-            Ok(())
         }
 
         /// Return the `name`d child, creating it if it's not already present.
@@ -304,7 +300,7 @@ mod bad_tree {
             fn recur(parent: &Node, child: &Node) -> Result<(), Box<dyn Error>> {
                 // This relies on using a child's incorrect value while it's its total
                 // time (before correcting the child's time next).
-                parent.correct_for_child(child)?;
+                parent.correct_for_child(child);
                 // Now correct this child's time (after we used the incorrect value).
                 child.for_each_child(recur)?;
                 Ok(())
