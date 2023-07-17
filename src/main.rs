@@ -271,16 +271,28 @@ mod bad_tree {
                     }
                     let last_node = parent.child(last_component);
 
-                    // If this is already Some then this is a duplicate record.
-                    // TODO: Maybe see what flamegraph.pl does with duplicates, and try to follow
-                    // that.
-                    assert!(last_node.attribute.get().is_none());
-                    // So it can be corrected later.
-                    last_node.attribute.set(Some(record.attribute));
-
-                    let prior =
-                        tree.original_order.insert(OrdRecord { ordinal, record }, last_node);
-                    debug_assert!(prior.is_none()); // These ordinals are guaranteed to be unique.
+                    match last_node.attribute.take() {
+                        // Reoccurrence of this node path.
+                        Some(attr) => {
+                            let summed_attrs =
+                                attr.checked_add(record.attribute).expect("no overflow");
+                            last_node.attribute.set(Some(summed_attrs));
+                            // Don't insert into `tree.original_order`, because this node already
+                            // was inserted the first time.  This prevents having reoccurrences in
+                            // our dump, which is necessary because our corrected attribute is the
+                            // sum of all original reoccurrences' attributes.
+                        },
+                        // First occurrence of this node path.
+                        None => {
+                            // So it can be corrected later.
+                            last_node.attribute.set(Some(record.attribute));
+                            let prior = tree
+                                .original_order
+                                .insert(OrdRecord { ordinal, record }, last_node);
+                            // These ordinals are guaranteed to be unique.
+                            debug_assert!(prior.is_none());
+                        },
+                    }
                 }
             }
         }
@@ -354,11 +366,13 @@ mod tests {
     fn basic() {
         #[rustfmt::skip]
         const BAD: &str = "\
-          thread1;main; 17797754976\n\
+          thread1;main; 5925054742\n\
           thread1;main;f2; 5925051360\n\
           thread1;main;f2;busy; 5925047168\n\
+          thread1;main; 5941982261\n\
           thread1;main;f1; 5941978880\n\
           thread1;main;f1;busy; 5941971904\n\
+          thread1;main; 5930717973\n\
           thread1;main;busy; 5930714592\n\
         ";
         #[rustfmt::skip]
